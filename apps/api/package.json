@@ -1,0 +1,33 @@
+{
+  "name": "@sugarstack/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --outDir dist",
+    "start": "node dist/index.js",
+    "db:migrate": "psql $DATABASE_URL -f src/db/schema.sql",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sugarstack/shared": "*",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "express-rate-limit": "^7.3.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.9.0",
+    "typescript": "^5.4.0"
+  }
+}
