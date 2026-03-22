@@ -10,7 +10,7 @@ export const menuRoutes = Router();
 // GET /api/menu/categories
 menuRoutes.get('/categories', async (_req, res: Response, next: NextFunction) => {
   try {
-    const result = await db.query<MenuCategory>(
+    const result = await db.query(
       `SELECT id, name, slug, description, image_url as "imageUrl", sort_order as "sortOrder"
        FROM menu_categories ORDER BY sort_order ASC`
     );
@@ -37,7 +37,7 @@ menuRoutes.get('/items', async (req: Request, res: Response, next: NextFunction)
     }
     query += ` ORDER BY mi.name ASC`;
 
-    const result = await db.query<MenuItem>(query, params);
+    const result = await db.query(query, params);
     res.json({ success: true, data: result.rows });
   } catch (err) { next(err); }
 });
@@ -45,7 +45,7 @@ menuRoutes.get('/items', async (req: Request, res: Response, next: NextFunction)
 // GET /api/menu/items/:id
 menuRoutes.get('/items/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await db.query<MenuItem>(
+    const result = await db.query(
       `SELECT id, category_id as "categoryId", name, description, price,
               image_url as "imageUrl", is_available as "isAvailable",
               allergens, tags, created_at as "createdAt"
@@ -67,7 +67,7 @@ menuRoutes.patch(
       const schema = z.object({ isAvailable: z.boolean() });
       const { isAvailable } = schema.parse(req.body);
 
-      const result = await db.query<MenuItem>(
+      const result = await db.query(
         `UPDATE menu_items SET is_available = $1, updated_at = NOW()
          WHERE id = $2
          RETURNING id, is_available as "isAvailable"`,

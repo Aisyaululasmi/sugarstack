@@ -108,7 +108,7 @@ orderRoutes.get('/:id', async (req: AuthRequest, res: Response, next: NextFuncti
        FROM orders WHERE id = $1`,
       [req.params.id]
     );
-    const order = orderResult.rows[0] as Order | undefined;
+    const order = orderResult.rows[0] as unknown as Order | undefined;
     if (!order) throw new AppError(404, 'Order not found');
 
     const isStaff = req.user!.role === 'staff' || req.user!.role === 'admin';
