@@ -96,7 +96,7 @@ ON CONFLICT DO NOTHING;
 -- Seed: default staff account (password: AAAAAAAA)
 INSERT INTO users (email, password_hash, name, role) VALUES (
   'staff@gmail.com',
-  '$2a$10$pXflgHMcmEj.6pzXwPuLwuAOAmpsCJFxPT7QvLeuc.iD7zC3JB4Na',
+  '$2a$10$qi7Ut0kjEyHgAsfv7rQIWunTM7rpVJM6L9dONqgVfYlYf5ayq8xRW',
   'Staff',
   'staff'
 ) ON CONFLICT (email) DO NOTHING;
