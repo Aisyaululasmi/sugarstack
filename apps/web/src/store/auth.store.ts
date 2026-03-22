@@ -6,7 +6,7 @@ import { authRepository } from '@/core/infrastructure/api/auth.repository';
 interface AuthState {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ user: User; token: string }>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
 }
@@ -20,6 +20,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         const { user, token } = await authRepository.login(email, password);
         set({ user, token });
+        return { user, token };
       },
 
       register: async (email, password, name) => {
