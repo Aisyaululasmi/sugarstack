@@ -92,3 +92,11 @@ INSERT INTO menu_items (category_id, name, description, price, is_available, tag
 SELECT id, 'Brown Butter Cookie', 'Classic brown butter with sea salt', 3.00, true, ARRAY['vegetarian']
 FROM menu_categories WHERE slug = 'cookies'
 ON CONFLICT DO NOTHING;
+
+-- Seed: default staff account (password: AAAAAAAA)
+INSERT INTO users (email, password_hash, name, role) VALUES (
+  'staff@gmail.com',
+  '$2a$10$pXflgHMcmEj.6pzXwPuLwuAOAmpsCJFxPT7QvLeuc.iD7zC3JB4Na',
+  'Staff',
+  'staff'
+) ON CONFLICT (email) DO NOTHING;
