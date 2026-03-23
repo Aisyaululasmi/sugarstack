@@ -10,6 +10,7 @@ COPY packages/shared/package.json ./packages/shared/
 RUN npm install
 
 COPY turbo.json ./
+COPY tsconfig.base.json ./
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 COPY apps/web/ ./apps/web/
