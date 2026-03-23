@@ -48,7 +48,6 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/
 
 # Web build
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/next.config.ts ./apps/web/
 COPY --from=builder /app/apps/web/package.json ./apps/web/
 
