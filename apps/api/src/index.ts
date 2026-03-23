@@ -13,7 +13,7 @@ import { orderRoutes } from './routes/order.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
-const PORT = process.env.API_PORT ?? 4000;
+const PORT = process.env.PORT ?? process.env.API_PORT ?? 4000;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000,http://localhost:3001,http://localhost:3002').split(',');
 
