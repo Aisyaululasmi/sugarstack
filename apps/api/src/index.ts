@@ -15,13 +15,18 @@ import { errorHandler } from './middleware/error.middleware';
 const app = express();
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 4000;
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000,http://localhost:3001,http://localhost:3002').split(',');
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : null; // null = allow all origins when env var is not set
 
 app.use(helmet());
 app.use(cors({
   origin: (origin, callback) => {
-    // allow no-origin requests (server-to-server, curl) and listed origins
-    if (!origin || allowedOrigins.includes(origin)) {
+    // allow no-origin requests (server-to-server, curl)
+    if (!origin) return callback(null, true);
+    // if ALLOWED_ORIGINS is not configured, allow all origins
+    if (!allowedOrigins) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
