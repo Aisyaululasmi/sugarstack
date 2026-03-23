@@ -8,10 +8,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDir": "../..",
+    "rootDir": "src",
     "paths": {
       "@sugarstack/shared": ["../../packages/shared/src"]
     }
   },
-  "include": ["src", "../../packages/shared/src"]
+  "include": ["src"]
 }
