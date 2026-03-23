@@ -9,7 +9,7 @@ export default function HomePage() {
           Sugar<span className="text-pink-500">Stack</span>
         </h1>
         <p className="text-lg text-gray-500">
-          Fresh baked goods. Seamless ordering. Made with love.
+          Fresh baked goods. Seamless ordering. Made with love. ✨
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
