@@ -38,6 +38,6 @@ export DATABASE_URL="postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME"
 echo "==> Starting API..."
 node /app/apps/api/dist/index.js &
 
-echo "==> Starting web..."
+echo "==> Starting web on port ${PORT:-3000}..."
 cd /app/apps/web
-exec /app/node_modules/.bin/next start -p 3000
+exec /app/node_modules/.bin/next start -p "${PORT:-3000}"
