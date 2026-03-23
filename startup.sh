@@ -11,7 +11,6 @@ if [ ! -f "$PGDATA/PG_VERSION" ]; then
   echo "==> Initializing PostgreSQL for the first time..."
   su-exec postgres initdb -D "$PGDATA" --encoding=UTF8 --no-locale
 
-  # Start temporarily (local socket only) to set up users and schema
   su-exec postgres pg_ctl -D "$PGDATA" -o "-c listen_addresses=''" -l /tmp/pg_init.log start
   sleep 2
 
@@ -30,5 +29,20 @@ sleep 3
 
 export DATABASE_URL="postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME"
 
-echo "==> Starting API and web..."
-exec pm2-runtime start /app/ecosystem.config.js
+# Find the actual API entry point (handles both flat and nested tsup output)
+if [ -f "/app/apps/api/dist/index.js" ]; then
+  API_ENTRY="/app/apps/api/dist/index.js"
+elif [ -f "/app/apps/api/dist/apps/api/src/index.js" ]; then
+  API_ENTRY="/app/apps/api/dist/apps/api/src/index.js"
+else
+  echo "ERROR: Cannot find API entry point in /app/apps/api/dist/"
+  find /app/apps/api/dist -name "*.js" | head -5
+  exit 1
+fi
+
+echo "==> Starting API from $API_ENTRY..."
+node "$API_ENTRY" &
+
+echo "==> Starting web..."
+cd /app/apps/web
+exec /app/node_modules/.bin/next start -p 3000
