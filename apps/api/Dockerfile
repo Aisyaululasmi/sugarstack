@@ -17,13 +17,12 @@ CMD ["npx", "tsx", "watch", "src/index.ts"]
 
 FROM base AS builder
 WORKDIR /app/apps/api
-RUN npx tsc --outDir dist
+RUN npx tsup
 
 FROM node:20-alpine AS production
 WORKDIR /app
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/package*.json ./
-COPY --from=builder /app/packages/shared ./packages/shared
-RUN npm ci --omit=dev
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/package*.json ./apps/api/
+RUN npm ci --omit=dev --workspace=apps/api --include-workspace-root
 EXPOSE 4000
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/api/dist/index.js"]
