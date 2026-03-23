@@ -14,7 +14,7 @@ export default function KitchenPage() {
   const { token, user, logout } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
 
   const fetchOrders = useCallback(async () => {
@@ -59,7 +59,7 @@ export default function KitchenPage() {
         <div>
           <h1 className="text-xl font-bold text-pink-400">🍳 Kitchen Dashboard</h1>
           <p className="text-gray-500 text-xs mt-0.5">
-            Last refresh: {lastRefresh.toLocaleTimeString()} · Auto-refreshes every 15s
+            {lastRefresh ? `Last refresh: ${lastRefresh.toLocaleTimeString()} · ` : ''}Auto-refreshes every 15s
           </p>
         </div>
         <div className="flex items-center gap-2">
