@@ -18,6 +18,14 @@ COPY apps/web/ ./apps/web/
 # Build API (tsup bundles @sugarstack/shared inline)
 RUN npm run build --workspace=apps/api
 
+# tsup may output to a nested path (dist/apps/api/src/index.js) when bundling
+# cross-package dependencies. Normalize it to dist/index.js so the path is always known.
+RUN if [ ! -f apps/api/dist/index.js ]; then \
+      ACTUAL=$(find apps/api/dist -name 'index.js' | head -1) && \
+      echo "Normalizing tsup output: $ACTUAL -> apps/api/dist/index.js" && \
+      cp "$ACTUAL" apps/api/dist/index.js; \
+    fi
+
 # Build Web (NEXT_PUBLIC_API_URL empty → browser uses /api relative path)
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build --workspace=apps/web
@@ -32,9 +40,6 @@ RUN apk add --no-cache postgresql su-exec
 # Prepare PostgreSQL data directory owned by postgres user
 RUN mkdir -p /var/lib/postgresql/data && chown postgres:postgres /var/lib/postgresql/data
 
-# Install PM2 to manage multiple processes
-RUN npm install -g pm2
-
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -42,8 +47,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-# API build
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
+# API build — only copy the normalized dist/index.js
+COPY --from=builder /app/apps/api/dist/index.js ./apps/api/dist/index.js
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 
 # Web build
@@ -54,7 +59,6 @@ COPY --from=builder /app/apps/web/package.json ./apps/web/
 # Database schema (used for first-run initialization)
 COPY --from=builder /app/apps/api/src/db/schema.sql ./schema.sql
 
-COPY ecosystem.config.js ./
 COPY startup.sh ./
 RUN chmod +x startup.sh
 
