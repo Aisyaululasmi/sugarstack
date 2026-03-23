@@ -37,8 +37,9 @@ WORKDIR /app
 # Install PostgreSQL + su-exec (for running postgres as non-root)
 RUN apk add --no-cache postgresql su-exec
 
-# Prepare PostgreSQL data directory owned by postgres user
-RUN mkdir -p /var/lib/postgresql/data && chown postgres:postgres /var/lib/postgresql/data
+# Prepare PostgreSQL directories
+RUN mkdir -p /var/lib/postgresql/data /run/postgresql && \
+    chown postgres:postgres /var/lib/postgresql/data /run/postgresql
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
