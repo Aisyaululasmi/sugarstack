@@ -35,7 +35,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install PostgreSQL + su-exec (for running postgres as non-root)
-RUN apk add --no-cache postgresql su-exec
+RUN apk add --no-cache postgresql postgresql-contrib su-exec
 
 # Prepare PostgreSQL directories
 RUN mkdir -p /var/lib/postgresql/data /run/postgresql && \

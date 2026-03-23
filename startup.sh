@@ -6,6 +6,11 @@ DB_NAME="${POSTGRES_DB:-sugarstack_db}"
 DB_USER="${POSTGRES_USER:-sugarstack}"
 DB_PASS="${POSTGRES_PASSWORD:-sugarstack_secret}"
 
+# Railway injects PORT for external traffic → that goes to Next.js
+# API always runs on internal port 4001 to avoid conflict
+WEB_PORT="${PORT:-3000}"
+API_PORT_INTERNAL=4001
+
 # Initialize database on first run
 if [ ! -f "$PGDATA/PG_VERSION" ]; then
   echo "==> Initializing PostgreSQL for the first time..."
@@ -35,9 +40,12 @@ sleep 3
 
 export DATABASE_URL="postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME"
 
-echo "==> Starting API..."
-node /app/apps/api/dist/index.js &
+echo "==> Starting API on internal port $API_PORT_INTERNAL..."
+PORT=$API_PORT_INTERNAL node /app/apps/api/dist/index.js &
 
-echo "==> Starting web on port ${PORT:-3000}..."
+sleep 3
+
+echo "==> Starting web on port $WEB_PORT (API proxied from localhost:$API_PORT_INTERNAL)..."
 cd /app/apps/web
-exec /app/node_modules/.bin/next start -p "${PORT:-3000}"
+export API_INTERNAL_URL="http://localhost:$API_PORT_INTERNAL"
+exec /app/node_modules/.bin/next start -p "$WEB_PORT"
