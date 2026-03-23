@@ -11,6 +11,8 @@ DB_PASS="${POSTGRES_PASSWORD:-sugarstack_secret}"
 WEB_PORT="${PORT:-3000}"
 API_PORT_INTERNAL=4001
 
+echo "==> PORT env: '${PORT}' | WEB_PORT: '$WEB_PORT' | API_PORT_INTERNAL: '$API_PORT_INTERNAL'"
+
 # Initialize database on first run
 if [ ! -f "$PGDATA/PG_VERSION" ]; then
   echo "==> Initializing PostgreSQL for the first time..."
