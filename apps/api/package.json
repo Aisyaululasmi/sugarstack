@@ -7,7 +7,7 @@
     "build": "tsup",
     "start": "node dist/index.js",
     "db:migrate": "psql $DATABASE_URL -f src/db/schema.sql",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit --rootDir ../.."
   },
   "dependencies": {
     "@sugarstack/shared": "*",

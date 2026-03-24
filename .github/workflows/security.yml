@@ -1,0 +1,135 @@
+name: Security Scanning & Dependency Audit
+
+on:
+  push:
+    branches:
+      - master
+      - rico/production-os
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Every Sunday at midnight UTC
+    - cron: "0 0 * * 0"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        continue-on-error: true
+        run: |
+          echo "## Dependency Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Running npm audit for known vulnerabilities (high and critical)..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=high 2>&1 | tee audit-output.txt
+          cat audit-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check workspace packages individually
+        continue-on-error: true
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Workspace Audit Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for dir in apps/* packages/*; do
+            if [ -f "$dir/package.json" ]; then
+              pkg_name=$(node -p "require('./$dir/package.json').name")
+              echo "### $pkg_name ($dir)" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              npm audit --workspace="$dir" --audit-level=high 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog secrets scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          extra_args: --only-verified --results=verified,unknown
+
+      - name: Check for common secret patterns
+        run: |
+          echo "## Secret Pattern Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          FOUND=0
+
+          # Check for .env files committed to the repo (excluding examples)
+          echo "### Checking for .env files in repository..." >> $GITHUB_STEP_SUMMARY
+          ENV_FILES=$(git ls-files | grep -E '\.env$|\.env\.local$|\.env\.production$' | grep -v '\.example' | grep -v '\.sample' || true)
+          if [ -n "$ENV_FILES" ]; then
+            echo ":warning: **Found .env files committed to repository:**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$ENV_FILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            FOUND=1
+          else
+            echo "No .env files found in tracked files." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Scan for hardcoded secrets/keys in source files
+          echo "### Scanning for hardcoded secret patterns..." >> $GITHUB_STEP_SUMMARY
+          PATTERNS=(
+            'AKIA[0-9A-Z]{16}'                          # AWS Access Key ID
+            'AIza[0-9A-Za-z\\-_]{35}'                   # Google API Key
+            'sk-[0-9a-zA-Z]{20,}'                       # Stripe/OpenAI secret keys
+            'ghp_[0-9a-zA-Z]{36}'                       # GitHub personal access token
+            'xox[baprs]-[0-9a-zA-Z\\-]{10,}'            # Slack tokens
+            'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' # JWT tokens (long ones only)
+          )
+
+          for pattern in "${PATTERNS[@]}"; do
+            MATCHES=$(git ls-files -- '*.ts' '*.js' '*.tsx' '*.jsx' '*.json' '*.yml' '*.yaml' | \
+              xargs grep -lnE "$pattern" 2>/dev/null | \
+              grep -v 'node_modules' | \
+              grep -v 'package-lock.json' | \
+              grep -v '.github/workflows' || true)
+            if [ -n "$MATCHES" ]; then
+              echo ":warning: **Potential secret pattern found** (\`$pattern\`):" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "$MATCHES" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No hardcoded secret patterns detected." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Final status
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::warning::Potential secrets or sensitive files detected. Review the job summary for details."
+          fi
