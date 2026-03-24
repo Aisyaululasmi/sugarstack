@@ -32,6 +32,7 @@ ENV NODE_ENV=production
 
 COPY --from=builder /app/apps/api/dist/index.js ./apps/api/dist/index.js
 COPY --from=builder /app/apps/api/package.json ./apps/api/
+COPY --from=builder /app/apps/api/src/db/schema.sql ./apps/api/src/db/schema.sql
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./
 
