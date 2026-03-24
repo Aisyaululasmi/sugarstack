@@ -79,9 +79,14 @@ async function runMigrations(): Promise<void> {
     }
   }
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  await pool.query(sql);
-  await pool.end();
-  console.log('✅ Database schema applied');
+  try {
+    await pool.query(sql);
+    console.log('✅ Database schema applied');
+  } catch (err: any) {
+    console.log(`⚠️ Auto-migration skipped: ${err.message}`);
+  } finally {
+    await pool.end();
+  }
 }
 
 async function start() {
