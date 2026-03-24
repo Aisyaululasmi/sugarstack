@@ -48,6 +48,6 @@ PORT=$API_PORT_INTERNAL node /app/apps/api/dist/index.js &
 sleep 3
 
 echo "==> Starting web on port $WEB_PORT (API proxied from localhost:$API_PORT_INTERNAL)..."
+cd /app/apps/web
 export API_INTERNAL_URL="http://localhost:$API_PORT_INTERNAL"
-export HOSTNAME="0.0.0.0"
-exec node /app/apps/web/server.js
+exec /app/node_modules/.bin/next start -p "$WEB_PORT"
