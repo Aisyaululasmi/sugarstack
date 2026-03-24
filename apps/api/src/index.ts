@@ -66,8 +66,8 @@ async function waitForDatabase(retries = 10, delayMs = 3000): Promise<void> {
 async function start() {
   try {
     await waitForDatabase();
-    app.listen(PORT, () => {
-      console.log(`🚀 SugarStack API running on http://localhost:${PORT}`);
+    app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`🚀 SugarStack API running on http://0.0.0.0:${PORT}`);
     });
   } catch (err) {
     console.error('❌ Failed to connect to database:', err);
