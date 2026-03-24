@@ -43,20 +43,19 @@ RUN mkdir -p /var/lib/postgresql/data /run/postgresql && \
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Root node_modules (contains pg, express, etc.)
+# Web standalone output FIRST (it contains its own node_modules + package.json)
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+
+# Then overlay API build + full node_modules on top (API needs express, pg, etc.)
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-
-# API build
 COPY --from=builder /app/apps/api/dist/index.js ./apps/api/dist/index.js
 COPY --from=builder /app/apps/api/package.json ./apps/api/
+
 # Schema for auto-migration and first-run DB init
 COPY --from=builder /app/apps/api/src/db/schema.sql ./apps/api/src/db/schema.sql
 COPY --from=builder /app/apps/api/src/db/schema.sql ./schema.sql
-
-# Web build -- standalone output
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 
 COPY startup.sh ./
 RUN chmod +x startup.sh
