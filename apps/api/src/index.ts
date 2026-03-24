@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Pool } from 'pg';
+import { readFileSync } from 'fs';
 
 import { authRoutes } from './routes/auth.routes';
 import { menuRoutes } from './routes/menu.routes';
@@ -63,14 +64,40 @@ async function waitForDatabase(retries = 10, delayMs = 3000): Promise<void> {
   }
 }
 
+async function runMigrations(): Promise<void> {
+  const schemaPath = resolve(__dirname, '../src/db/schema.sql');
+  const fallbackPath = resolve(process.cwd(), 'src/db/schema.sql');
+  let sql: string;
+  try {
+    sql = readFileSync(schemaPath, 'utf-8');
+  } catch {
+    try {
+      sql = readFileSync(fallbackPath, 'utf-8');
+    } catch {
+      console.log('⚠️ schema.sql not found, skipping auto-migration');
+      return;
+    }
+  }
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query(sql);
+    console.log('✅ Database schema applied');
+  } catch (err: any) {
+    console.log(`⚠️ Auto-migration skipped: ${err.message}`);
+  } finally {
+    await pool.end();
+  }
+}
+
 async function start() {
   try {
     await waitForDatabase();
-    app.listen(PORT, () => {
-      console.log(`🚀 SugarStack API running on http://localhost:${PORT}`);
+    await runMigrations();
+    app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`🚀 SugarStack API running on http://0.0.0.0:${PORT}`);
     });
   } catch (err) {
-    console.error('❌ Failed to connect to database:', err);
+    console.error('❌ Failed to start:', err);
     process.exit(1);
   }
 }

@@ -6,7 +6,7 @@ DB_NAME="${POSTGRES_DB:-sugarstack_db}"
 DB_USER="${POSTGRES_USER:-sugarstack}"
 DB_PASS="${POSTGRES_PASSWORD:-sugarstack_secret}"
 
-# Railway injects PORT for external traffic → that goes to Next.js
+# Railway injects PORT for external traffic -> that goes to Next.js
 # API always runs on internal port 4001 to avoid conflict
 WEB_PORT="${PORT:-3000}"
 API_PORT_INTERNAL=4001
@@ -25,6 +25,9 @@ if [ ! -f "$PGDATA/PG_VERSION" ]; then
   su-exec postgres psql postgres -c "CREATE USER \"$DB_USER\" WITH PASSWORD '$DB_PASS';"
   su-exec postgres psql postgres -c "CREATE DATABASE \"$DB_NAME\" OWNER \"$DB_USER\";"
   su-exec postgres psql "$DB_NAME" -f /app/schema.sql
+  su-exec postgres psql "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"$DB_USER\";"
+  su-exec postgres psql "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$DB_USER\";"
+  su-exec postgres psql "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"$DB_USER\";"
 
   su-exec postgres pg_ctl -D "$PGDATA" -m fast stop
   sleep 1
@@ -39,6 +42,11 @@ su-exec postgres pg_ctl -D "$PGDATA" -l /tmp/postgresql.log start || {
   exit 1
 }
 sleep 3
+
+# Ensure app user has permissions (idempotent, fixes existing deploys)
+echo "==> Ensuring database permissions..."
+su-exec postgres psql "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
+su-exec postgres psql "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$DB_USER\";" 2>/dev/null || true
 
 export DATABASE_URL="postgresql://$DB_USER:$DB_PASS@localhost:5432/$DB_NAME"
 
