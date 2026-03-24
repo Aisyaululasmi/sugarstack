@@ -6,7 +6,7 @@ DB_NAME="${POSTGRES_DB:-sugarstack_db}"
 DB_USER="${POSTGRES_USER:-sugarstack}"
 DB_PASS="${POSTGRES_PASSWORD:-sugarstack_secret}"
 
-# Railway injects PORT for external traffic → that goes to Next.js
+# Railway injects PORT for external traffic -> that goes to Next.js
 # API always runs on internal port 4001 to avoid conflict
 WEB_PORT="${PORT:-3000}"
 API_PORT_INTERNAL=4001
@@ -48,6 +48,6 @@ PORT=$API_PORT_INTERNAL node /app/apps/api/dist/index.js &
 sleep 3
 
 echo "==> Starting web on port $WEB_PORT (API proxied from localhost:$API_PORT_INTERNAL)..."
-cd /app/apps/web
 export API_INTERNAL_URL="http://localhost:$API_PORT_INTERNAL"
-exec /app/node_modules/.bin/next start -p "$WEB_PORT"
+export HOSTNAME="0.0.0.0"
+exec node /app/apps/web/server.js
